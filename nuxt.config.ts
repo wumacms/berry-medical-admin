@@ -8,16 +8,9 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
   devtools: { enabled: true },
 
-  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/supabase'],
+  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/supabase', '@pinia/nuxt'],
 
   supabase: {
-    redirectOptions: {
-      login: '/login',
-      callback: '/confirm',
-      exclude: [
-        '/login*'
-      ]
-    },
     types: '~/types/supabase-database'
   },
 

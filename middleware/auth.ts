@@ -1,26 +1,22 @@
-export default defineNuxtRouteMiddleware(async (to, from) => {
-  // 登录页允许所有人访问
-  if (to.path === '/login') {
-    return
+export default defineNuxtRouteMiddleware(async (to, _from) => {
+  const authStore = useAuthStore()
+
+  // 初始化认证状态
+  if (authStore.loading) {
+    await authStore.initAuth()
   }
 
-  // 只在客户端检查认证状态（避免 SSR/静态生成时的时序问题）
-  if (import.meta.client) {
-    const { isAuthenticated, user } = useAuth()
+  const isAuthenticated = authStore.isAuthenticated
 
-    // 等待一会儿让 Supabase 恢复会话
-    await new Promise(resolve => setTimeout(resolve, 100))
+  // 检查是否有 auth 中间件，或者路由需要认证
+  const requiresAuth = to.meta.requiresAuth || 
+    (to.meta.middleware && Array.isArray(to.meta.middleware) && to.meta.middleware.includes('auth'))
 
-    // 再次检查
-    if (!isAuthenticated.value) {
-      return navigateTo('/login')
-    }
-
-    // 检查用户是否激活（如果有 is_active 字段）
-    if (user.value && 'is_active' in user.value && user.value.is_active === false) {
-      const { logout } = useAuth()
-      await logout()
-      return navigateTo('/login?reason=inactive')
-    }
+  if (requiresAuth && !isAuthenticated) {
+    return navigateTo({ path: '/login', query: { redirect: to.fullPath } })
+  }
+  // 仅允许未登录用户访问的路由（登录/注册）
+  else if (to.meta.guest && isAuthenticated) {
+    return navigateTo('/')
   }
 })

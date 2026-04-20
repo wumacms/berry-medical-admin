@@ -20,7 +20,7 @@
             <i class="fas fa-external-link-alt mr-1"></i>
             访问网站
           </a>
-          <span class="text-sm text-gray-600">{{ user?.email }}</span>
+          <span class="text-sm text-gray-600">{{ authStore.user?.email }}</span>
           <button
             @click="handleLogout"
             class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
@@ -60,8 +60,9 @@
 
 <script setup lang="ts">
 const route = useRoute()
+const router = useRouter()
 const config = useRuntimeConfig()
-const { user, logout } = useAuth()
+const authStore = useAuthStore()
 
 // 菜单配置
 const menuItems = [
@@ -83,7 +84,13 @@ function isActive(path: string): boolean {
 // 退出登录
 async function handleLogout() {
   if (confirm('确定要退出登录吗？')) {
-    await logout()
+    try {
+      await authStore.signOut()
+      alert('已退出登录')
+      router.push('/login')
+    } catch (err: any) {
+      alert(err.message || '退出登录失败')
+    }
   }
 }
 

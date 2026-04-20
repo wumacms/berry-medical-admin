@@ -1,46 +1,48 @@
+/**
+ * 认证 Composable - 封装 authStore 提供更友好的 API
+ * 保留此文件以保持向后兼容，实际认证逻辑在 stores/auth.ts 中
+ */
 export const useAuth = () => {
-  const supabaseClient = useSupabaseClient()
-  const user = useSupabaseUser()
-  
-  const isAuthenticated = computed(() => !!user.value)
-  const isLoading = ref(false)
+  const authStore = useAuthStore()
 
-  // 初始化认证状态
+  const user = computed(() => authStore.user)
+  const isAuthenticated = computed(() => authStore.isAuthenticated)
+  const isLoading = computed(() => authStore.loading)
+  const userEmail = computed(() => authStore.userEmail)
+
   async function initialize() {
-    // Supabase 客户端会自动处理认证状态
+    await authStore.initAuth()
   }
 
-  // 登录
   async function login({ email, password }: { email: string; password: string }) {
-    isLoading.value = true
     try {
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password
-      })
-      
-      if (error) {
-        return { error }
-      }
-      
-      return { data }
+      await authStore.signIn(email, password)
+      return { data: authStore.user }
     } catch (err: any) {
-      return { error: { message: err.message } }
-    } finally {
-      isLoading.value = false
+      return { error: err }
     }
   }
 
-  // 登出
   async function logout() {
-    isLoading.value = true
+    await authStore.signOut()
+    navigateTo('/login')
+  }
+
+  async function register({ email, password }: { email: string; password: string }) {
     try {
-      await supabaseClient.auth.signOut()
-      navigateTo('/login')
+      const result = await authStore.signUp(email, password)
+      return { data: result }
     } catch (err: any) {
-      console.error('登出失败:', err)
-    } finally {
-      isLoading.value = false
+      return { error: err }
+    }
+  }
+
+  async function updatePassword(newPassword: string) {
+    try {
+      await authStore.updatePassword(newPassword)
+      return { data: authStore.user }
+    } catch (err: any) {
+      return { error: err }
     }
   }
 
@@ -48,8 +50,11 @@ export const useAuth = () => {
     user,
     isAuthenticated,
     isLoading,
+    userEmail,
     initialize,
     login,
-    logout
+    logout,
+    register,
+    updatePassword,
   }
 }
