@@ -4,20 +4,23 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     return
   }
 
-  // 初始化认证状态
-  const { isAuthenticated, initialize, user } = useAuth()
-  
-  await initialize()
+  // 只在客户端检查认证状态（避免 SSR/静态生成时的时序问题）
+  if (import.meta.client) {
+    const { isAuthenticated, user } = useAuth()
 
-  // 检查是否已登录
-  if (!isAuthenticated.value) {
-    return navigateTo('/login')
-  }
+    // 等待一会儿让 Supabase 恢复会话
+    await new Promise(resolve => setTimeout(resolve, 100))
 
-  // 检查用户是否激活（如果有 is_active 字段）
-  if (user.value && 'is_active' in user.value && user.value.is_active === false) {
-    const { logout } = useAuth()
-    await logout()
-    return navigateTo('/login?reason=inactive')
+    // 再次检查
+    if (!isAuthenticated.value) {
+      return navigateTo('/login')
+    }
+
+    // 检查用户是否激活（如果有 is_active 字段）
+    if (user.value && 'is_active' in user.value && user.value.is_active === false) {
+      const { logout } = useAuth()
+      await logout()
+      return navigateTo('/login?reason=inactive')
+    }
   }
 })
