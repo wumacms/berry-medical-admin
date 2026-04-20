@@ -4,6 +4,7 @@
  */
 export const useAuth = () => {
   const authStore = useAuthStore()
+  const config = useRuntimeConfig()
 
   const user = computed(() => authStore.user)
   const isAuthenticated = computed(() => authStore.isAuthenticated)
@@ -25,7 +26,8 @@ export const useAuth = () => {
 
   async function logout() {
     await authStore.signOut()
-    navigateTo('/login')
+    const basePath = config.public.cdnBaseUrl || ''
+    navigateTo(basePath + '/login')
   }
 
   async function register({ email, password }: { email: string; password: string }) {

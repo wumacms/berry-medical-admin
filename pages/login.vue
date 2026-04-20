@@ -5,13 +5,15 @@ definePageMeta({
   layout: 'blank',
   middleware: async () => {
     const authStore = useAuthStore()
+    const config = useRuntimeConfig()
     // 确保认证状态已初始化
     if (authStore.loading) {
       await authStore.initAuth()
     }
     // 如果已登录，自动跳转到首页
     if (authStore.isAuthenticated) {
-      return navigateTo('/')
+      const basePath = config.public.cdnBaseUrl || ''
+      return navigateTo(basePath + '/')
     }
   }
 })
