@@ -61,14 +61,13 @@
                 >
                   <i class="fas fa-edit"></i>
                 </NuxtLink>
-                <a
-                  :href="`/berry-medical-nuxt${item.path}`"
-                  target="_blank"
+                <button
+                  @click="openPreview(item.path)"
                   class="text-gray-400 hover:text-gray-600"
                   title="预览"
                 >
                   <i class="fas fa-external-link-alt"></i>
-                </a>
+                </button>
                 <button
                   @click="deletePage(item)"
                   class="text-red-500 hover:text-red-700"
@@ -92,6 +91,7 @@ definePageMeta({
 })
 
 const supabase = useSupabaseClient()
+const config = useRuntimeConfig()
 
 // 状态
 const pages = ref<any[]>([])
@@ -149,4 +149,9 @@ async function deletePage(item: any) {
 onMounted(() => {
   fetchPages()
 })
+
+// 打开页面预览
+function openPreview(path: string) {
+  window.open(config.public.websiteUrl + path, '_blank')
+}
 </script>

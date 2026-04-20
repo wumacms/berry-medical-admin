@@ -62,11 +62,11 @@
           <div class="mt-4 pt-4 border-t">
             <p class="text-sm text-gray-500 mb-2">预览链接：</p>
             <a
-              :href="`/berry-medical-nuxt${pageForm.path}`"
+              :href="`/berry-medical-web${pageForm.path}`"
               target="_blank"
               class="text-blue-600 hover:text-blue-700 text-sm break-all"
             >
-              {{ `/berry-medical-nuxt${pageForm.path}` }}
+              {{ `/berry-medical-web${pageForm.path}` }}
             </a>
           </div>
 

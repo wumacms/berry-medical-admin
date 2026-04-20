@@ -25,7 +25,8 @@ export default defineNuxtConfig({
     public: {
       cdnBaseUrl: process.env.NUXT_PUBLIC_CDN_BASE_URL || '',
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL || '',
-      supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY || ''
+      supabaseAnonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY || '',
+      websiteUrl: process.env.NUXT_PUBLIC_WEBSITE_URL || 'http://localhost:3000'
     }
   },
 

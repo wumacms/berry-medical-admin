@@ -13,8 +13,8 @@
         <!-- 用户信息 -->
         <div class="flex items-center gap-4">
           <a
-            href="/berry-medical-nuxt"
-            target="_blank"
+            href="javascript:void(0)"
+            @click="openWebsite"
             class="px-3 py-2 text-sm text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <i class="fas fa-external-link-alt mr-1"></i>
@@ -60,6 +60,7 @@
 
 <script setup lang="ts">
 const route = useRoute()
+const config = useRuntimeConfig()
 const { user, logout } = useAuth()
 
 // 菜单配置
@@ -84,6 +85,11 @@ async function handleLogout() {
   if (confirm('确定要退出登录吗？')) {
     await logout()
   }
+}
+
+// 打开前台网站
+function openWebsite() {
+  window.open(config.public.websiteUrl + '/', '_blank')
 }
 </script>
 

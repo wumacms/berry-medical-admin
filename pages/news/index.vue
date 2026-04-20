@@ -112,14 +112,13 @@
                 >
                   <i class="fas fa-edit"></i>
                 </NuxtLink>
-                <a
-                  :href="`/berry-medical-nuxt/news/${item.id}`"
-                  target="_blank"
+                <button
+                  @click="openPreview(item.id)"
                   class="text-gray-400 hover:text-gray-600"
                   title="预览"
                 >
                   <i class="fas fa-external-link-alt"></i>
-                </a>
+                </button>
                 <button
                   @click="toggleStatus(item)"
                   class="text-gray-400 hover:text-gray-600"
@@ -173,6 +172,7 @@ definePageMeta({
 })
 
 const supabase = useSupabaseClient()
+const config = useRuntimeConfig()
 
 // 状态
 const newsList = ref<any[]>([])
@@ -282,4 +282,9 @@ async function deleteNews(item: any) {
 onMounted(() => {
   fetchNews()
 })
+
+// 打开新闻预览
+function openPreview(id: number) {
+  window.open(config.public.websiteUrl + '/news/' + id, '_blank')
+}
 </script>

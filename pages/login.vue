@@ -156,7 +156,7 @@ onMounted(async () => {
       <!-- 返回前台 -->
       <div class="mt-6 text-center">
         <a
-          href="/berry-medical-nuxt"
+          href="/berry-medical-web"
           target="_blank"
           class="text-sm text-gray-500 hover:text-blue-600 transition-colors"
         >
