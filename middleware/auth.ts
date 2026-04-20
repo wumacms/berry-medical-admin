@@ -1,7 +1,7 @@
 export default defineNuxtRouteMiddleware(async (to, _from) => {
   const authStore = useAuthStore()
 
-  // 初始化认证状态
+  // 初始化认证状态 - 等待完成以确保状态正确
   if (authStore.loading) {
     await authStore.initAuth()
   }
