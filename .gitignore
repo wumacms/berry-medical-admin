@@ -1,0 +1,39 @@
+# Nuxt dev/build outputs
+.output
+.nitro
+.nuxt
+.cache
+dist
+
+# Node dependencies
+node_modules
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# System files
+.DS_Store
+*.pem
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+*.suo
+*.sw?
+
+# Misc
+*.local
+
+# Testing
+coverage
+.nyc_output
