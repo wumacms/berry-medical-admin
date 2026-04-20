@@ -87,8 +87,7 @@ async function handleLogout() {
     try {
       await authStore.signOut()
       alert('已退出登录')
-      const basePath = config.public.cdnBaseUrl || ''
-      router.push(basePath + '/login')
+      router.push('/login')
     } catch (err: any) {
       alert(err.message || '退出登录失败')
     }
