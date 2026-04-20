@@ -54,6 +54,6 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    '/berry-medical-admin/**': { ssr: false }
+    '/**': { ssr: false }
   }
 })

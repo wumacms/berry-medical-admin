@@ -13,6 +13,7 @@ export const useAuthStore = defineStore('auth', () => {
   const supabase = useSupabaseClient()
   const user = ref<User | null>(null)
   const loading = ref(true)
+  let authStateChangedRegistered = false
 
   const isAuthenticated = computed(() => !!user.value)
   const userEmail = computed(() => user.value?.email || '')
@@ -20,12 +21,20 @@ export const useAuthStore = defineStore('auth', () => {
   async function initAuth() {
     loading.value = true
     try {
-      const { data } = await supabase.auth.getUser()
-      user.value = data.user
+      // 获取当前 session
+      const { data: { session } } = await supabase.auth.getSession()
+      user.value = session?.user ?? null
 
-      supabase.auth.onAuthStateChange((_event, session) => {
-        user.value = session?.user ?? null
-      })
+      // 只注册一次 auth state change listener
+      if (!authStateChangedRegistered) {
+        authStateChangedRegistered = true
+        supabase.auth.onAuthStateChange((_event, session) => {
+          user.value = session?.user ?? null
+        })
+      }
+    } catch (err) {
+      console.error('初始化认证失败:', err)
+      user.value = null
     } finally {
       loading.value = false
     }

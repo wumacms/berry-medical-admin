@@ -6,6 +6,12 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
     await authStore.initAuth()
   }
 
+  // 再次检查（防止竞态条件）
+  if (authStore.loading) {
+    await new Promise(resolve => setTimeout(resolve, 100))
+    await authStore.initAuth()
+  }
+
   const isAuthenticated = authStore.isAuthenticated
 
   // 检查是否有 auth 中间件，或者路由需要认证
