@@ -22,13 +22,98 @@
       <i class="fas fa-spinner fa-spin text-2xl text-gray-500"></i>
     </div>
 
-    <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- 左侧：页面信息 -->
-      <div class="lg:col-span-1">
-        <div class="bg-white rounded-xl shadow-sm p-6 sticky top-20">
-          <h2 class="text-lg font-semibold text-gray-800 mb-4">页面信息</h2>
-          
-          <form @submit.prevent="savePageInfo" class="space-y-4">
+    <div v-else class="space-y-6">
+      <!-- 区块管理 -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <!-- 拖拽提示 -->
+        <div class="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm">
+          <i class="fas fa-arrows-alt mr-2"></i>拖动区块行可调整页面中区块的显示顺序
+        </div>
+
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-lg font-semibold text-gray-800">区块管理</h2>
+          <button
+            @click="showBlockModal = true"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            <i class="fas fa-plus mr-2"></i>添加区块
+          </button>
+        </div>
+
+        <!-- 区块列表 -->
+        <div v-if="blocks.length === 0" class="text-center py-8 text-gray-500">
+          <i class="fas fa-puzzle-piece text-4xl mb-4"></i>
+          <p>暂无区块</p>
+          <button
+            @click="showBlockModal = true"
+            class="mt-2 text-blue-600 hover:text-blue-700"
+          >
+            添加第一个区块
+          </button>
+        </div>
+
+        <div v-else class="space-y-4">
+          <div
+            v-for="(block, index) in blocks"
+            :key="block.id"
+            :class="[
+              'border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors cursor-move',
+              blockDragIndex === index ? 'bg-blue-50 opacity-75' : ''
+            ]"
+            draggable="true"
+            @dragstart="onBlockDragStart($event, index)"
+            @dragover="onBlockDragOver($event, index)"
+            @dragend="onBlockDragEnd"
+            @drop="onBlockDrop($event, index)"
+          >
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-3">
+                <div class="text-gray-400 cursor-move">
+                  <i class="fas fa-arrows-alt handle"></i>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                      {{ block.type }}
+                    </span>
+                  <span class="text-gray-400">|</span>
+                  <span class="text-gray-500 text-sm">{{ block.title || '无标题' }}</span>
+                </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 ml-4">
+                <label class="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    :checked="block.is_published"
+                    @change="toggleBlockStatus(block)"
+                    class="w-4 h-4 text-blue-600 border-gray-300 rounded"
+                  />
+                </label>
+                <button
+                  @click="editBlock(block)"
+                  class="text-blue-600 hover:text-blue-700"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button
+                  @click="deleteBlock(block)"
+                  class="text-red-500 hover:text-red-700"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 页面信息 -->
+      <div class="bg-white rounded-xl shadow-sm p-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">页面信息</h2>
+
+        <form @submit.prevent="savePageInfo" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">页面名称</label>
               <input
@@ -43,118 +128,41 @@
               <input
                 v-model="pageForm.path"
                 type="text"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-50"
                 readonly
               />
             </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">描述</label>
-              <textarea
-                v-model="pageForm.description"
-                rows="2"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              ></textarea>
-            </div>
-
-            <button
-              type="submit"
-              :disabled="savingPage"
-              class="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              {{ savingPage ? '保存中...' : '保存页面信息' }}
-            </button>
-          </form>
-
-          <div class="mt-4 pt-4 border-t">
-            <p class="text-sm text-gray-500 mb-2">预览链接：</p>
-            <a
-              :href="`/berry-medical-web${pageForm.path}`"
-              target="_blank"
-              class="text-blue-600 hover:text-blue-700 text-sm break-all"
-            >
-              {{ `/berry-medical-web${pageForm.path}` }}
-            </a>
           </div>
 
-          <div class="mt-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">描述</label>
+            <textarea
+              v-model="pageForm.description"
+              rows="2"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            ></textarea>
+          </div>
+
+          <div class="flex items-center justify-between pt-4 border-t">
+            <div class="flex items-center gap-4">
+              <button
+                type="submit"
+                :disabled="savingPage"
+                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                {{ savingPage ? '保存中...' : '保存页面信息' }}
+              </button>
+
+            </div>
             <button
+              type="button"
               @click="deletePage"
-              class="w-full py-2 text-red-600 border border-red-300 rounded-lg hover:bg-red-50"
+              class="px-4 py-2 text-red-600 border border-red-300 rounded-lg hover:bg-red-50"
             >
               删除页面
             </button>
           </div>
-        </div>
-      </div>
-
-      <!-- 右侧：区块管理 -->
-      <div class="lg:col-span-2">
-        <div class="bg-white rounded-xl shadow-sm p-6">
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-lg font-semibold text-gray-800">区块管理</h2>
-            <button
-              @click="showBlockModal = true"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              <i class="fas fa-plus mr-2"></i>添加区块
-            </button>
-          </div>
-
-          <!-- 区块列表 -->
-          <div v-if="blocks.length === 0" class="text-center py-8 text-gray-500">
-            <i class="fas fa-puzzle-piece text-4xl mb-4"></i>
-            <p>暂无区块</p>
-            <button
-              @click="showBlockModal = true"
-              class="mt-2 text-blue-600 hover:text-blue-700"
-            >
-              添加第一个区块
-            </button>
-          </div>
-
-          <div v-else class="space-y-4">
-            <div
-              v-for="(block, index) in blocks"
-              :key="block.id"
-              class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
-            >
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-2">
-                    <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                      {{ block.type }}
-                    </span>
-                    <span class="text-gray-400">|</span>
-                    <span class="text-gray-500 text-sm">{{ block.title || '无标题' }}</span>
-                  </div>
-                </div>
-                <div class="flex items-center gap-2 ml-4">
-                  <label class="flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      :checked="block.is_published"
-                      @change="toggleBlockStatus(block)"
-                      class="w-4 h-4 text-blue-600 border-gray-300 rounded"
-                    />
-                  </label>
-                  <button
-                    @click="editBlock(block)"
-                    class="text-blue-600 hover:text-blue-700"
-                  >
-                    <i class="fas fa-edit"></i>
-                  </button>
-                  <button
-                    @click="deleteBlock(block)"
-                    class="text-red-500 hover:text-red-700"
-                  >
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        </form>
       </div>
     </div>
 
@@ -184,12 +192,17 @@
               <option value="hero">Hero 横幅</option>
               <option value="about">关于我们</option>
               <option value="services">服务列表</option>
+              <option value="service-detail">服务详情</option>
+              <option value="advantages">核心优势</option>
+              <option value="projects">业绩案例</option>
+              <option value="news">新闻动态</option>
+              <option value="news-list">新闻列表</option>
+              <option value="contact">联系我们</option>
+              <option value="cta">行动召唤</option>
               <option value="features">特性展示</option>
-              <option value="cta">行动号召</option>
               <option value="gallery">图片画廊</option>
               <option value="testimonials">客户评价</option>
               <option value="faq">常见问题</option>
-              <option value="contact">联系方式</option>
               <option value="custom">自定义内容</option>
             </select>
           </div>
@@ -258,10 +271,23 @@
         </form>
       </div>
     </div>
+
+    <!-- 区块排序保存提示 -->
+    <Transition name="fade">
+      <div
+        v-if="blockShowSaveTip"
+        class="fixed bottom-6 right-6 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3"
+      >
+        <i class="fas fa-check-circle"></i>
+        <span>排序已保存</span>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { Database } from '~/types/supabase-database'
+
 definePageMeta({
   layout: 'default',
   middleware: ['auth']
@@ -269,7 +295,7 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
-const supabase = useSupabaseClient()
+const supabase = useSupabaseClient<Database>()
 const config = useRuntimeConfig()
 
 const pageId = route.params.id as string
@@ -291,6 +317,11 @@ const savingPage = ref(false)
 const savingBlock = ref(false)
 const showBlockModal = ref(false)
 const editingBlock = ref<any>(null)
+const blockDragIndex = ref<number | null>(null)
+const blockShowSaveTip = ref(false)
+
+// 区块拖拽相关
+let blockDragStartIndex = -1
 
 // 页面表单
 const pageForm = reactive({
@@ -353,6 +384,72 @@ async function fetchBlocks() {
     blocks.value = data || []
   } catch (err) {
     console.error('获取区块失败:', err)
+  }
+}
+
+// 区块拖拽开始
+function onBlockDragStart(event: DragEvent, index: number) {
+  blockDragStartIndex = index
+  blockDragIndex.value = index
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', String(index))
+  }
+}
+
+// 区块拖拽经过
+function onBlockDragOver(event: DragEvent, index: number) {
+  event.preventDefault()
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+  blockDragIndex.value = index
+}
+
+// 区块放下
+function onBlockDrop(event: DragEvent, index: number) {
+  event.preventDefault()
+  if (blockDragStartIndex === -1 || blockDragStartIndex === index) return
+
+  // 移动数组元素
+  const newBlocks = [...blocks.value]
+  const [movedItem] = newBlocks.splice(blockDragStartIndex, 1)
+  newBlocks.splice(index, 0, movedItem)
+  blocks.value = newBlocks
+
+  // 保存新排序
+  saveBlockSortOrder()
+}
+
+// 区块拖拽结束
+function onBlockDragEnd() {
+  blockDragIndex.value = null
+  blockDragStartIndex = -1
+}
+
+// 保存区块排序到数据库
+async function saveBlockSortOrder() {
+  try {
+    for (let i = 0; i < blocks.value.length; i++) {
+      const block = blocks.value[i]
+      const { error } = await supabase
+        .from('blocks')
+        // @ts-expect-error Supabase 类型推断问题
+        .update({ sort_order: i })
+        .eq('id', block.id)
+
+      if (error) {
+        console.error('更新区块排序失败:', error)
+      }
+    }
+
+    // 显示保存成功提示
+    blockShowSaveTip.value = true
+    setTimeout(() => {
+      blockShowSaveTip.value = false
+    }, 2000)
+  } catch (err) {
+    console.error('保存区块排序失败:', err)
   }
 }
 
@@ -526,3 +623,15 @@ onMounted(() => {
   fetchBlocks()
 })
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
