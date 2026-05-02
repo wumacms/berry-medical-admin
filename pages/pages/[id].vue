@@ -7,6 +7,13 @@
           <i class="fas fa-arrow-left"></i>
         </NuxtLink>
         <h1 class="text-2xl font-bold text-gray-800">编辑页面：{{ page?.name }}</h1>
+        <button
+          @click="openPreview(pageForm.path)"
+          class="ml-4 text-gray-400 hover:text-gray-600"
+          title="预览"
+        >
+          <i class="fas fa-external-link-alt"></i>
+        </button>
       </div>
     </div>
 
@@ -121,9 +128,6 @@
                     <span class="text-gray-400">|</span>
                     <span class="text-gray-500 text-sm">{{ block.title || '无标题' }}</span>
                   </div>
-                  <p class="text-sm text-gray-500 truncate">
-                    配置: {{ JSON.stringify(block.config).slice(0, 100) }}...
-                  </p>
                 </div>
                 <div class="flex items-center gap-2 ml-4">
                   <label class="flex items-center cursor-pointer">
@@ -176,7 +180,6 @@
             <select
               v-model="blockForm.type"
               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              :disabled="!!editingBlock"
             >
               <option value="hero">Hero 横幅</option>
               <option value="about">关于我们</option>
@@ -267,6 +270,7 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const supabase = useSupabaseClient()
+const config = useRuntimeConfig()
 
 const pageId = route.params.id as string
 
@@ -330,6 +334,11 @@ async function fetchPage() {
   } finally {
     loading.value = false
   }
+}
+
+// 预览页面
+function openPreview(path: string) {
+  window.open(config.public.websiteUrl + path, '_blank')
 }
 
 // 获取区块列表
