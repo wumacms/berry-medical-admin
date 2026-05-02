@@ -11,6 +11,11 @@
       </NuxtLink>
     </div>
 
+    <!-- 拖拽提示 -->
+    <div class="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm">
+      <i class="fas fa-arrows-alt mr-2"></i>拖动页面行可调整网站导航菜单的显示顺序
+    </div>
+
     <!-- 页面列表 -->
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
       <div v-if="loading" class="text-center py-12 text-gray-500">
@@ -29,6 +34,7 @@
       <table v-else class="w-full">
         <thead class="bg-gray-50">
           <tr class="text-left text-gray-500 text-sm">
+            <th class="px-4 py-4 font-medium w-12"></th>
             <th class="px-6 py-4 font-medium">页面名称</th>
             <th class="px-6 py-4 font-medium">路径</th>
             <th class="px-6 py-4 font-medium">描述</th>
@@ -38,10 +44,21 @@
         </thead>
         <tbody class="divide-y divide-gray-100">
           <tr
-            v-for="item in pages"
+            v-for="(item, index) in pages"
             :key="item.id"
-            class="hover:bg-gray-50 transition-colors"
+            :class="[
+              'hover:bg-gray-50 transition-colors cursor-move',
+              dragIndex === index ? 'bg-blue-50 opacity-75' : ''
+            ]"
+            draggable="true"
+            @dragstart="onDragStart($event, index)"
+            @dragover="onDragOver($event, index)"
+            @dragend="onDragEnd"
+            @drop="onDrop($event, index)"
           >
+            <td class="px-4 py-4 text-center text-gray-400">
+              <i class="fas fa-arrows-alt handle"></i>
+            </td>
             <td class="px-6 py-4">
               <span class="font-medium text-gray-800">{{ item.name }}</span>
             </td>
@@ -81,21 +98,39 @@
         </tbody>
       </table>
     </div>
+
+    <!-- 保存提示 -->
+    <Transition name="fade">
+      <div
+        v-if="showSaveTip"
+        class="fixed bottom-6 right-6 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3"
+      >
+        <i class="fas fa-check-circle"></i>
+        <span>排序已保存</span>
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { Database } from '~/types/supabase-database'
+
 definePageMeta({
   layout: 'default',
   middleware: ['auth']
 })
 
-const supabase = useSupabaseClient()
+const supabase = useSupabaseClient<Database>()
 const config = useRuntimeConfig()
 
 // 状态
 const pages = ref<any[]>([])
 const loading = ref(true)
+const dragIndex = ref<number | null>(null)
+const showSaveTip = ref(false)
+
+// 拖拽相关
+let dragStartIndex = -1
 
 // 格式化日期
 function formatDate(date: string): string {
@@ -109,7 +144,7 @@ async function fetchPages() {
     const { data, error } = await supabase
       .from('pages')
       .select('*')
-      .order('created_at', { ascending: false })
+      .order('nav_sort_order', { ascending: true })
 
     if (!error) {
       pages.value = data || []
@@ -118,6 +153,74 @@ async function fetchPages() {
     console.error('获取页面失败:', err)
   } finally {
     loading.value = false
+  }
+}
+
+// 拖拽开始
+function onDragStart(event: DragEvent, index: number) {
+  dragStartIndex = index
+  dragIndex.value = index
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', String(index))
+  }
+}
+
+// 拖拽经过
+function onDragOver(event: DragEvent, index: number) {
+  event.preventDefault()
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+  dragIndex.value = index
+}
+
+// 放下
+function onDrop(event: DragEvent, index: number) {
+  event.preventDefault()
+  if (dragStartIndex === -1 || dragStartIndex === index) return
+
+  // 移动数组元素
+  const newPages = [...pages.value]
+  const [movedItem] = newPages.splice(dragStartIndex, 1)
+  newPages.splice(index, 0, movedItem)
+  pages.value = newPages
+
+  // 保存新排序
+  saveSortOrder()
+}
+
+// 拖拽结束
+function onDragEnd() {
+  dragIndex.value = null
+  dragStartIndex = -1
+}
+
+// 保存排序到数据库
+async function saveSortOrder() {
+  try {
+    // 更新每个页面的 nav_sort_order (导航菜单排序)
+    for (let i = 0; i < pages.value.length; i++) {
+      const page = pages.value[i]
+      const { error } = await supabase
+        .from('pages')
+        // @ts-expect-error Supabase 类型推断问题
+        .update({ nav_sort_order: i })
+        .eq('id', page.id)
+
+      if (error) {
+        console.error('更新排序失败:', error)
+      }
+    }
+
+    // 显示保存成功提示
+    showSaveTip.value = true
+    setTimeout(() => {
+      showSaveTip.value = false
+    }, 2000)
+  } catch (err) {
+    console.error('保存排序失败:', err)
+    alert('保存排序失败，请重试')
   }
 }
 
@@ -155,3 +258,20 @@ function openPreview(path: string) {
   window.open(config.public.websiteUrl + path, '_blank')
 }
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.dragging {
+  opacity: 0.5;
+  background-color: #eff6ff;
+}
+</style>
